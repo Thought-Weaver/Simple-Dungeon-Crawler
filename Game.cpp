@@ -10,13 +10,15 @@
 
 using namespace std;
 
+/* The tiles for each place on the map */
 struct map_tile
 {
-	char tilecharacter;
+	char tilecharacter; /* The printed char for the tile */
 	bool walkable;
 	bool hiddentrap;
 };
 
+/* The structure for items being kept in inventory */
 struct inventoryitem
 {
 	bool equipped;
@@ -30,22 +32,30 @@ struct Point
 }
 playerpos;
 
+/* Set the size of the map */
 int const mapwidth = 20;
 int const mapheight = 20;
 
+/* Create an empty map */
 map_tile map[mapwidth][mapheight];
 
+/* Set the inventory limit */
 int const itemlimit = 10;
 
+/* Create an empty inventory */
 int inventory[itemlimit];
 
+/* Create an empty array of items in the inventory */
 inventoryitem item[itemlimit];
 
 int currentlevel;
 
-void GenerateMap()
+/* Creates the map at random and updates significant variables */
+void generate_map()
 {
+	/* Update the current level */
 	currentlevel = currentlevel + 1;
+	
 	srand(time(NULL));
 	for(int y = 0; y < mapheight; y++)
 	{
@@ -61,7 +71,7 @@ void GenerateMap()
 			else
 			{
 				map[x][y].tilecharacter = '.';
-			    map[x][y].walkable = true;
+				map[x][y].walkable = true;
 				map[x][y].hiddentrap = false;
 			}
 
@@ -75,19 +85,22 @@ void GenerateMap()
 		}
 	}
 	
+	/* Create loot on the map */
 	int loop = 0;
-    while(loop < 5)
-    {
+	while(loop < 5)
+    	{
 		srand(time(NULL));
 		int l = rand() % 20;
 		map[l][l].tilecharacter = 'L';
 		map[l][l].walkable = true;
 		loop++;
-    }
-
+    	}
+	
+	/* Generate the door's position */
 	int d = rand() % mapwidth;
 	int e = rand() % mapheight;
 
+	/* Update the map with the player at initial pos */
 	map[d][e].tilecharacter = 'O';
 	map[d][e].walkable = true;
 	map[d][e].hiddentrap = false;
@@ -96,16 +109,21 @@ void GenerateMap()
 	map[0][0].hiddentrap = false;
 }
 
-void PrintMap()
+/* Print out the current map */
+void print_map()
 {
 	for(int y = 0; y < mapheight; y++)
 	{
 		for(int x = 0; x < mapwidth; x++)
 		{
-				if(x == playerpos.x && y == playerpos.y)
-					cout << "@";
-				else
-					cout << map[x][y].tilecharacter;
+			if(x == playerpos.x && y == playerpos.y)
+			{
+				cout << "@";
+			}
+			else
+			{
+				cout << map[x][y].tilecharacter;
+			}
 		}
 		if(y == 0)
 		{
@@ -115,171 +133,222 @@ void PrintMap()
 	}
 }
 
+/* Load saved data */
 void load()
 {
 	ifstream myfile;
 	myfile.open ("currentlevel.save", ios::out);
 
+	/* Check to make sure the file can be opened */
 	if(myfile.fail())
 	{
 		cout << "Error opening data..." << endl;
 		myfile.close();
 	}
 
+	/* Read map info from the file */
 	if (myfile.is_open())
-  {
-     for(int y = 0; y < mapheight; y++)
-	{
-		for(int x = 0; x < mapwidth; x++)
+  	{
+	     	for(int y = 0; y < mapheight; y++)
 		{
-           myfile >> map[x][y].tilecharacter;
-           myfile >> map[x][y].walkable;
-		}
-     }
-		 myfile.close();
-  }
+			for(int x = 0; x < mapwidth; x++)
+			{
+		  		myfile >> map[x][y].tilecharacter;
+		   		myfile >> map[x][y].walkable;
+			}
+    	 	}
+		myfile.close();
+	}
 }
 
+/* Save the player's data */
 void save()
 {
 	ofstream myfile;
 	myfile.open ("currentlevel.save", ios::out);
 
+	/* Check to make sure the file can be opened */
 	if(myfile.fail())
 	{
 		cout << "Error opening data..." << endl;
 		myfile.close();
 	}
 
+	/* Write map info to the file */
 	if (myfile.is_open())
-  {
-     for(int y = 0; y < mapheight; y++)
-	{
-		for(int x = 0; x < mapwidth; x++)
+  	{
+		for(int y = 0; y < mapheight; y++)
 		{
-           myfile << map[x][y].tilecharacter;
-           myfile <<  map[x][y].walkable;
-		}
-     }
-		 myfile.close();
-  }
+			for(int x = 0; x < mapwidth; x++)
+			{
+				myfile << map[x][y].tilecharacter;
+				myfile <<  map[x][y].walkable;
+			}
+     		}
+		myfile.close();
+  	}
 }
 
-void saveloot()
+/* Save the player's loot */
+void save_loot()
 {
 	srand(time(NULL));
 	int loot = rand() % 5;
 	ofstream myfile;
 	myfile.open ("loot.save", ios::app);
 
+	/* Check that the file can be opened */
 	if(myfile.fail())
 	{
 		cout << "Error opening data..." << endl;
 		myfile.close();
 	}
 
+	/* Write loot to file */
 	if (myfile.is_open())
-		{
-			myfile << loot << endl;
-		}
+	{
+		myfile << loot << endl;
+	}
 
-	 myfile.close();
+	myfile.close();
  }
 
-void loadloot()
+/* Load the player's loot */
+void load_loot()
 {
 	ifstream myfile;
 	myfile.open ("loot.save", ios::in);
 
+	/* Check that the file can be opened */
 	if(myfile.fail())
 	{
 		cout << "Error opening data..." << endl;
 		myfile.close();
 	}
 
+	/* Load the player's loot into inventory */
 	if (myfile.is_open())
+	{
+		for(int l = 0; l < itemlimit; l++)
 		{
-			for(int l = 0; l < itemlimit; l++)
+			myfile >> inventory[l];
+			switch (inventory[l])
 			{
-				myfile >> inventory[l];
-				switch (inventory[l])
-				{
-					 case 0: item[l].id = 0; item[l].equipped = false; item[l].name = "Empty"; break;
-				     case 1: item[l].id = 1; item[l].equipped = false; item[l].name = "Boots"; break;
-					 case 2: item[l].id = 2; item[l].equipped = false; item[l].name = "Shield"; break;
-					 case 3: item[l].id = 3; item[l].equipped = false; item[l].name = "Sword"; break;
-					 case 4: item[l].id = 4; item[l].equipped = false; item[l].name = "Torso Armor"; break;
-				     case 5: item[l].id = 5; item[l].equipped = false; item[l].name = "Helm"; break;
-				     default: break;
-				}
+				 case 0: 
+					item[l].id = 0; 
+					item[l].equipped = false; 
+					item[l].name = "Empty"; 
+					break;
+			     	 case 1: 
+					item[l].id = 1; 
+					item[l].equipped = false; 
+					item[l].name = "Boots"; 
+					break;
+				 case 2: 
+					item[l].id = 2; 
+					item[l].equipped = false; 
+					item[l].name = "Shield"; 
+					break;
+				 case 3: 
+					item[l].id = 3; 
+					item[l].equipped = false; 
+					item[l].name = "Sword"; 
+					break;
+				 case 4: 
+					item[l].id = 4; 
+					item[l].equipped = false; 
+					item[l].name = "Torso Armor"; 
+					break;
+			     case 5: 
+					item[l].id = 5; 
+					item[l].equipped = false; 
+					item[l].name = "Helm"; 
+					break;
+			     default: 
+					break;
 			}
 		}
+	}
 
 	 myfile.close();
  }
 
-void saveotherdata()
+/* Save additional misc data */
+void save_other_data()
 {
 	ofstream myfile;
 	myfile.open ("otherdata.save", ios::out);
 
+	/* Check that the file can be opened */
 	if(myfile.fail())
 	{
 		cout << "Error opening data..." << endl;
 		myfile.close();
 	}
 
+	/* Write additional data to file */
 	if (myfile.is_open())
-		{
-			myfile << currentlevel << endl;
-		}
+	{
+		myfile << currentlevel << endl;
+	}
 
 	 myfile.close();
  }
 
-void loadotherdata()
+void load_other_data()
 {
 	ifstream myfile;
 	myfile.open ("otherdata.save", ios::in);
 
+	/* Check that the file can be opened */
 	if(myfile.fail())
 	{
 		cout << "Error opening data..." << endl;
 		myfile.close();
 	}
 
+	/* Load additional data from file */
 	if (myfile.is_open())
+	{
+		for(int loadlines = 0; loadlines < 1; loadlines++)
 		{
-			for(int loadlines = 0; loadlines < 1; loadlines++)
+			if(loadlines == 0)
 			{
-				if(loadlines == 0)
-				{
 				myfile >> currentlevel;
-				}
 			}
 		}
+	}
 
 	 myfile.close();
  }
 
 int main()
 {
+	/* Play the background music */
 	PlaySound(TEXT("mainmusic.wav"), NULL, SND_FILENAME | SND_ASYNC);
+	
+	/* Set player's initial position to 0, 0 */
 	playerpos.x = 0;
 	playerpos.y = 0;
+	
+	/* Load saved data */
 	load();
-	loadloot();
-	loadotherdata();
+	load_loot();
+	load_other_data();
 
 	char option = 'w';
 
+	/* Game loop */
 	while(true)
 	{
-	PrintMap();
+	
+	/* Print map and instructions */
+	print_map();
 	cout << "WASD to move, I to view your inventory, and E to save." << endl;
 	cout << ">";
 	cin >> option;
 
+	/* Handle movement input */
 	if((option == 'W' || option == 'w') && playerpos.y > 0 && map[playerpos.x][playerpos.y-1].walkable)
 	{
 		system("cls");
@@ -301,7 +370,7 @@ int main()
 		playerpos.x--;
 	}
 
-
+	/* If moving at edges of the map */
 	if((option == 'W' || option == 'w') && playerpos.y > 0 || map[playerpos.x][playerpos.y-1].walkable == false)
 	{
 		system("cls");
@@ -319,41 +388,47 @@ int main()
 		system("cls");
 	}
 
+	/* Equip an item if the selected item is available to equip */
 	if(option <= itemlimit)
 	{
-		if(item[option].equipped != true && item[option].id != 0) item[option].equipped = true;
+		if(item[option].equipped != true && item[option].id != 0) 
+			item[option].equipped = true;
 	}
 
-
+	/* Save data */
 	if(option == 'E' || option == 'e')
 	{
 		save();
-		saveotherdata();
+		save_other_data();
 	}
 
+	/* If the player reaches the door, generate the next level */
 	if(map[playerpos.x][playerpos.y].tilecharacter == 'O')
 	{
 		save();
-		saveotherdata();
-		GenerateMap();
+		save_other_data();
+		generate_map();
 		playerpos.x = 0;
 		playerpos.y = 0;
 	}
 
+	/* If the player manually wants to generate a new level */
 	if(option == 'G' || option == 'g')
 	{
-		GenerateMap();
+		generate_map();
 		playerpos.x = 0;
 		playerpos.y = 0;
 	}
 
+	/* If the player finds loot */
 	if(map[playerpos.x][playerpos.y].tilecharacter == 'L')
 	{
 		map[playerpos.x][playerpos.y].tilecharacter = '.';
 		cout << "Loot collected!" << endl << endl;
-		saveloot();
+		save_loot();
 	}
 
+	/* If the player triggers a trap, send them back to where they started */
 	if(map[playerpos.x][playerpos.y].tilecharacter == '.' && map[playerpos.x][playerpos.y].hiddentrap == true)
 	{
 		map[playerpos.x][playerpos.y].tilecharacter = 'X';
@@ -362,12 +437,15 @@ int main()
 		playerpos.y = 0;
 	}
 
-	if(option == 'Q') break;
+	/* If the player quits the game */
+	if(option == 'Q') 
+		break;
 
+	/* If the player wants to view their inventory */
 	if(option == 'I' || option == 'i')
 	{
-	loadloot();
-	cout << "Inventory: " << endl;
+		load_loot();
+		cout << "Inventory: " << endl;
 
 		for(int l = 0; l < itemlimit; l++)
 		{
@@ -375,16 +453,8 @@ int main()
 			cout << item[l].equipped << endl;
 		}
 
-	cout << endl;
-
+		cout << endl;
 	}
-
-	if(option == 'N' || option == 'n')
-	{
-		save();
-		saveotherdata();
-	}
-
 
 	}
 
